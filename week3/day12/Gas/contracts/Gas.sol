@@ -3,23 +3,15 @@ pragma solidity 0.8.0;
 
 import "./Ownable.sol";
 
-contract Constants {
-    bool public tradeFlag = true;
-    bool public basicFlag = false;
-    bool public dividendFlag = true;
-}
-
-contract GasContract is Ownable, Constants {
+contract GasContract is Ownable {
     uint256 immutable public totalSupply; // cannot be updated
     uint256 public paymentCounter;
     mapping(address => uint256) public balances;
-    uint256 constant public tradePercent = 12;
     address immutable public contractOwner;
-    uint256 public tradeMode;
     mapping(address => Payment[]) public payments;
     mapping(address => uint256) public whitelist;
     address[5] public administrators;
-    bool public isReady = false;
+    
     enum PaymentType {  
         Unknown,
         BasicPayment,
@@ -53,19 +45,11 @@ contract GasContract is Ownable, Constants {
         uint256 valueB; // max 3 digits
     }
 
-    mapping(address => ImportantStruct) public whiteListStruct;
-
     event AddedToWhitelist(address userAddress, uint256 tier);
 
     modifier onlyAdminOrOwner() {
         address senderOfTx = msg.sender;
-        if (checkForAdmin(senderOfTx)) {
-            require(
-                checkForAdmin(senderOfTx),
-                "Gas Contract Only Admin Check-  Caller not admin"
-            );
-            _;
-        } else if (senderOfTx == contractOwner) {
+        if (checkForAdmin(senderOfTx) || (senderOfTx == contractOwner)) {
             _;
         } else {
             revert(
@@ -144,7 +128,7 @@ contract GasContract is Ownable, Constants {
     }
 
     function getTradingMode() public view returns (bool mode_) {
-        return tradeFlag;
+        return true;
     }
 
     function addHistory(address _updateAddress)
@@ -257,7 +241,7 @@ contract GasContract is Ownable, Constants {
         address _recipient,
         uint256 _amount,
         ImportantStruct memory _struct
-    ) public checkIfWhiteListed(msg.sender) {
+    ) public  {
         address senderOfTx = msg.sender;
         require(
             balances[senderOfTx] >= _amount,
@@ -271,12 +255,6 @@ contract GasContract is Ownable, Constants {
         balances[_recipient] += _amount;
         balances[senderOfTx] += whitelist[senderOfTx];
         balances[_recipient] -= whitelist[senderOfTx];
-
-        /* whiteListStruct[senderOfTx] = ImportantStruct(0, 0, 0);
-        ImportantStruct storage newImportantStruct = whiteListStruct[senderOfTx];
-        newImportantStruct.valueA = _struct.valueA;
-        newImportantStruct.bigValue = _struct.bigValue;
-        newImportantStruct.valueB = _struct.valueB; */
         emit WhiteListTransfer(_recipient);
     }
 }
